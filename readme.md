@@ -67,11 +67,11 @@ tubeSystem.RegisterChannel("/stream/:streamId", pts.ChannelHandlers{
 ```go
 r.POST("/connect", func(c *gin.Context) {
   properties := make(map[string]interface{}, 1)
-	properties["ctx"] = c
+  properties["ctx"] = c
 
-	if err := tubeSystem.HandleRequest(c.Writer, c.Request, properties); err != nil {
-		println("Something went wrong while handling a Socket request")
-	}
+  if err := tubeSystem.HandleRequest(c.Writer, c.Request, properties); err != nil {
+    println("Something went wrong while handling a Socket request")
+  }
 })
 ```
 
