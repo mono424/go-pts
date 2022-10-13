@@ -29,7 +29,7 @@ go get github.com/mono424/go-pts-gorilla-connector
 ```go
 import (
   "github.com/mono424/go-pts"
-  ptsc "github.com/mono424/go-pts-gorilla-connector"
+  ptsc_gorilla "github.com/mono424/go-pts-gorilla-connector"
 )
 ```
 
@@ -38,7 +38,7 @@ import (
 1. Create a new TubeSystem
 
 ```go
-tubeSystem := pts.New(ptsc.NewConnector(
+tubeSystem := pts.New(ptsc_gorilla.NewConnector(
   websocket.Upgrader{},
   func(err *pts.Error) {
     println(err.Description)
