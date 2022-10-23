@@ -369,7 +369,7 @@ func TestTubeSystemMessaging(t *testing.T) {
 			return
 		}
 
-		channelNotExistingErr := tubeSystem.Send("example/non-existant/foobar", fakeClient.Id, testPayloadJson)
+		channelNotExistingErr := tubeSystem.Send("example/non-existent/foobar", fakeClient.Id, testPayloadJson)
 		if channelNotExistingErr == nil {
 			t.Errorf("tubeSystem.Send(...) return nil, want channel not exists error.")
 			return
