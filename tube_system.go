@@ -59,6 +59,11 @@ func (r *TubeSystem) IsSubscribed(channelPath string, clientId string) bool {
 	return false
 }
 
+// GetChannel returns a registered channel for an exact channel path.
+func (r *TubeSystem) GetChannel(channelPath string) (bool, *Channel) {
+	return r.channels.GetByExactPath(channelPath)
+}
+
 func (r *TubeSystem) Send(channelPath string, clientId string, payload []byte) *Error {
 	channelExists, channel, _ := r.channels.Get(channelPath)
 	if !channelExists {

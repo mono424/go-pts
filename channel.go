@@ -85,6 +85,16 @@ func (c *Channel) HandleMessage(client *Client, message *Message) {
 	}
 }
 
+// GetAllSubscribers returns all subscribers
+func (c *Channel) GetAllSubscribers() []*Context {
+	return c.subscribers.GetAll()
+}
+
+// GetSubscribers returns subscribers for the given path
+func (c *Channel) GetSubscribers(path string) []*Context {
+	return c.subscribers.GetAllForPath(path)
+}
+
 // IsSubscribed returns true if the client is connected to the channel
 func (c *Channel) IsSubscribed(clientId string, path string) bool {
 	return c.subscribers.IsSubscribed(clientId, path)

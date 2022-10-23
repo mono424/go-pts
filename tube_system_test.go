@@ -161,6 +161,54 @@ func TestTubeSystemConnection(t *testing.T) {
 		}
 	})
 
+	t.Run("GetChannel should return registered channel", func(t *testing.T) {
+		channelPath := "example/path"
+		channelPathInvalid := "example/path/testy"
+		fakeConnector, _ := NewFakeConnector(func(err *Error) {})
+		tubeSystem := New(fakeConnector)
+		channel := tubeSystem.RegisterChannel(channelPath, ChannelHandlers{})
+
+		if found, foundChannel := tubeSystem.GetChannel(channelPath); !found {
+			t.Errorf("tubeSystem.GetChannel(channelPath) = (false, ...), want (true, ...)")
+			return
+		} else if foundChannel != channel {
+			t.Errorf("tubeSystem.GetChannel(channelPath) returns wrong channel.")
+			return
+		}
+
+		if found, foundChannel := tubeSystem.GetChannel(channelPathInvalid); found {
+			t.Errorf("tubeSystem.GetChannel(channelPath) = (true, ...), want (false, ...)")
+			return
+		} else if foundChannel != nil {
+			t.Errorf("tubeSystem.GetChannel(channelPath) returns not nil as channel, want nil")
+			return
+		}
+	})
+
+	t.Run("GetChannel should return registered channel with variable", func(t *testing.T) {
+		channelPath := "example/path/:var"
+		channelPathInvalid := "example/path/testy"
+		fakeConnector, _ := NewFakeConnector(func(err *Error) {})
+		tubeSystem := New(fakeConnector)
+		channel := tubeSystem.RegisterChannel(channelPath, ChannelHandlers{})
+
+		if found, foundChannel := tubeSystem.GetChannel(channelPath); !found {
+			t.Errorf("tubeSystem.GetChannel(channelPath) = (false, ...), want (true, ...)")
+			return
+		} else if foundChannel != channel {
+			t.Errorf("tubeSystem.GetChannel(channelPath) returns wrong channel.")
+			return
+		}
+
+		if found, foundChannel := tubeSystem.GetChannel(channelPathInvalid); found {
+			t.Errorf("tubeSystem.GetChannel(channelPath) = (true, ...), want (false, ...)")
+			return
+		} else if foundChannel != nil {
+			t.Errorf("tubeSystem.GetChannel(channelPath) returns not nil as channel, want nil")
+			return
+		}
+	})
+
 	t.Run("Handle Sub/Unsub", func(t *testing.T) {
 		channelPath := "example/path/:var"
 		testVar := "test"
