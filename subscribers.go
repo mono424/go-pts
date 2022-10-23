@@ -35,6 +35,24 @@ func (subs *ChannelSubscribers) Add(context *Context) {
 	subs.subscribers[createKey(context.Client.Id, context.FullPath)] = context
 }
 
+func (subs *ChannelSubscribers) GetAll() []*Context {
+	var found []*Context
+	for _, context := range subs.subscribers {
+		found = append(found, context)
+	}
+	return found
+}
+
+func (subs *ChannelSubscribers) GetAllForPath(path string) []*Context {
+	var found []*Context
+	for _, context := range subs.subscribers {
+		if context.FullPath == path {
+			found = append(found, context)
+		}
+	}
+	return found
+}
+
 func (subs *ChannelSubscribers) RemoveAllPaths(clientId string) []*Context {
 	subs.mutex.Lock()
 	defer subs.mutex.Unlock()
