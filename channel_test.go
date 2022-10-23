@@ -386,4 +386,84 @@ func TestChannelPathMatch(t *testing.T) {
 		}
 
 	})
+
+	t.Run("Get subscribers should return subscribers for path", func(t *testing.T) {
+		testPath := []string{"example", "path", ":var"}
+		var testContexts []*Context
+
+		pathA := strings.Join(append(testPath[0:2], "foo"), channelPathSep)
+		pathB := strings.Join(append(testPath[0:2], "bar"), channelPathSep)
+		pathC := strings.Join(append(testPath[0:2], "wow"), channelPathSep)
+
+		client1Id := "ABC123"
+		client1Paths := []string{
+			pathA,
+			pathB,
+		}
+		testClient := &Client{Id: client1Id, sendMessage: func(message []byte) error {
+			return nil
+		}}
+
+		client2Id := "ABC321"
+		client2Paths := []string{
+			pathC,
+		}
+		testClient2 := &Client{Id: client2Id, sendMessage: func(message []byte) error {
+			return nil
+		}}
+
+		client3Id := "ABC010"
+		client3Paths := []string{
+			pathA,
+			pathC,
+		}
+		testClient3 := &Client{Id: client3Id, sendMessage: func(message []byte) error {
+			return nil
+		}}
+
+		for _, path := range client1Paths {
+			testContexts = append(testContexts, &Context{
+				FullPath: path,
+				Client:   testClient,
+			})
+		}
+
+		for _, path := range client2Paths {
+			testContexts = append(testContexts, &Context{
+				FullPath: path,
+				Client:   testClient2,
+			})
+		}
+
+		for _, path := range client3Paths {
+			testContexts = append(testContexts, &Context{
+				FullPath: path,
+				Client:   testClient3,
+			})
+		}
+
+		channel := Channel{
+			path:        testPath,
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		for _, context := range testContexts {
+			channel.Subscribe(context)
+		}
+
+		contextsA := channel.GetAllSubscribers()
+		if len(contextsA) != len(testContexts) {
+			t.Errorf("channel.GetAllSubscribers() returned %d items, want %d items.", len(contextsA), len(testContexts))
+			return
+		}
+		for _, context := range testContexts {
+			if !contains(contextsA, context) {
+				t.Errorf("channel.GetSubscribers(pathA) is missing a context.")
+				return
+			}
+		}
+
+	})
 }
