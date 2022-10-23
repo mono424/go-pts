@@ -27,8 +27,9 @@ func (s *ChannelStore) Register(path string, handlers ChannelHandlers) *Channel 
 	return &channel
 }
 
+// Get finds a channel with a matching path.
 func (s *ChannelStore) Get(path string) (bool, *Channel, map[string]string) {
-	if channel, ok := s.channels[path]; ok {
+	if found, channel := s.GetByExactPath(path); found {
 		return true, channel, map[string]string{}
 	}
 
@@ -39,6 +40,12 @@ func (s *ChannelStore) Get(path string) (bool, *Channel, map[string]string) {
 	}
 
 	return false, nil, nil
+}
+
+// GetByExactPath finds a channel by its exact path name.
+func (s *ChannelStore) GetByExactPath(path string) (bool, *Channel) {
+	channel, found := s.channels[path]
+	return found, channel
 }
 
 func (s *ChannelStore) OnMessage(client *Client, message *Message) {

@@ -306,4 +306,86 @@ func TestChannelPathMatch(t *testing.T) {
 			t.Errorf("channel.Unsubscribe(%s, %s) = true, want false", testClient.Id, pathString)
 		}
 	})
+
+	t.Run("Get subscribers should return subscribers for path", func(t *testing.T) {
+		testPath := []string{"example", "path", ":var"}
+		var testContexts map[string][]*Context
+
+		pathA := strings.Join(append(testPath[0:1], "foo"), channelPathSep)
+		pathB := strings.Join(append(testPath[0:1], "bar"), channelPathSep)
+
+		testContexts[pathA] = []*Context{}
+		testContexts[pathB] = []*Context{}
+
+		client1Id := "ABC123"
+		client1Paths := []string{
+			pathA,
+			pathB,
+		}
+		testClient := &Client{Id: client1Id, sendMessage: func(message []byte) error {
+			return nil
+		}}
+
+		client2Id := "ABC321"
+		client2Paths := []string{
+			pathA,
+		}
+		testClient2 := &Client{Id: client2Id, sendMessage: func(message []byte) error {
+			return nil
+		}}
+
+		for _, v := range client1Paths {
+			pathString := strings.Join(append(testPath[0:1], v), channelPathSep)
+			testContexts[v] = append(testContexts[v], &Context{
+				FullPath: pathString,
+				Client:   testClient,
+			})
+		}
+
+		for _, v := range client2Paths {
+			pathString := strings.Join(append(testPath[0:1], v), channelPathSep)
+			testContexts[v] = append(testContexts[v], &Context{
+				FullPath: pathString,
+				Client:   testClient2,
+			})
+		}
+
+		channel := Channel{
+			path:        testPath,
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		for _, contexts := range testContexts {
+			for _, context := range contexts {
+				channel.Subscribe(context)
+			}
+		}
+
+		contextsA := channel.GetSubscribers(pathA)
+		if len(contextsA) != len(testContexts[pathA]) {
+			t.Errorf("channel.GetSubscribers(pathA) returned %d items, want %d items.", len(contextsA), len(testContexts[pathA]))
+			return
+		}
+		for _, context := range testContexts[pathA] {
+			if !contains(contextsA, context) {
+				t.Errorf("channel.GetSubscribers(pathA) is missing a context.")
+				return
+			}
+		}
+
+		contextsB := channel.GetSubscribers(pathB)
+		if len(contextsB) != len(testContexts[pathB]) {
+			t.Errorf("channel.GetSubscribers(pathB) returned %d items, want %d items.", len(contextsB), len(testContexts[pathB]))
+			return
+		}
+		for _, context := range testContexts[pathB] {
+			if !contains(contextsB, context) {
+				t.Errorf("channel.GetSubscribers(pathB) is missing a context.")
+				return
+			}
+		}
+
+	})
 }
