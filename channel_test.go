@@ -220,7 +220,7 @@ func TestChannelPathMatch(t *testing.T) {
 		var testContexts []*Context
 
 		for _, v := range testParams {
-			pathString := strings.Join(append(testPath[0:1], v), channelPathSep)
+			pathString := strings.Join(append(testPath[0:2], v), channelPathSep)
 			testContexts = append(testContexts, &Context{
 				FullPath: pathString,
 				Client:   testClient,
@@ -309,10 +309,10 @@ func TestChannelPathMatch(t *testing.T) {
 
 	t.Run("Get subscribers should return subscribers for path", func(t *testing.T) {
 		testPath := []string{"example", "path", ":var"}
-		var testContexts map[string][]*Context
+		testContexts := map[string][]*Context{}
 
-		pathA := strings.Join(append(testPath[0:1], "foo"), channelPathSep)
-		pathB := strings.Join(append(testPath[0:1], "bar"), channelPathSep)
+		pathA := strings.Join(append(testPath[0:2], "foo"), channelPathSep)
+		pathB := strings.Join(append(testPath[0:2], "bar"), channelPathSep)
 
 		testContexts[pathA] = []*Context{}
 		testContexts[pathB] = []*Context{}
@@ -334,18 +334,16 @@ func TestChannelPathMatch(t *testing.T) {
 			return nil
 		}}
 
-		for _, v := range client1Paths {
-			pathString := strings.Join(append(testPath[0:1], v), channelPathSep)
-			testContexts[v] = append(testContexts[v], &Context{
-				FullPath: pathString,
+		for _, path := range client1Paths {
+			testContexts[path] = append(testContexts[path], &Context{
+				FullPath: path,
 				Client:   testClient,
 			})
 		}
 
-		for _, v := range client2Paths {
-			pathString := strings.Join(append(testPath[0:1], v), channelPathSep)
-			testContexts[v] = append(testContexts[v], &Context{
-				FullPath: pathString,
+		for _, path := range client2Paths {
+			testContexts[path] = append(testContexts[path], &Context{
+				FullPath: path,
 				Client:   testClient2,
 			})
 		}
