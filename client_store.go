@@ -15,7 +15,7 @@ func (c *ClientStore) init() {
 }
 
 func (c *ClientStore) NextId() string {
-	var uuidGen, _ = uuid.NewUUID()
+	var uuidGen, _ = uuid.NewRandom()
 	uuidString := uuidGen.String()
 	if _, ok := c.clients[uuidString]; ok {
 		return c.NextId()
