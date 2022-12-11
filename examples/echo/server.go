@@ -34,14 +34,14 @@ func main() {
 
 	tubeSystem.RegisterChannel("echo", pts.ChannelHandlers{
 		OnSubscribe: func(s *pts.Context) {
-			print("Client joined: " + s.FullPath)
+			println("Client joined: " + s.FullPath)
 		},
 		OnMessage: func(s *pts.Context, message *pts.Message) {
-			print("New Message on " + s.FullPath + ": " + string(message.Payload))
+			println("New Message on " + s.FullPath + ": " + string(message.Payload))
 			s.Send(message.Payload)
 		},
 		OnUnsubscribe: func(s *pts.Context) {
-			print("Client left: " + s.FullPath)
+			println("Client left: " + s.FullPath)
 		},
 	})
 
