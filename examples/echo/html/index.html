@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script type="module">
+        import { GoPTSClient } from "/js/index.module.js";
+
+        const socketUrl = "{{ .socketUrl }}";
+        window.addEventListener("load", function(evt) {
+            const client = new GoPTSClient({ url: socketUrl, debugging: true })
+            const input = document.querySelector("#input");
+            console.log(client);
+            client.subscribeChannel("echo", payload => {
+                const message = document.createElement("div")
+                message.innerText = payload;
+                document.querySelector("#output").appendChild(message);
+            });
+
+            document.querySelector("#form").addEventListener("submit", (e) => {
+                e.preventDefault();
+                client.send("echo", { payload: input.value });
+            })
+        });
+    </script>
+</head>
+<body>
+    <div>
+        <form id="form">
+            <input id="input" type="text" value="Hello world!">
+            <button type="submit">Send</button>
+        </form>
+        <div id="output" style="max-height: 70vh;overflow-y: scroll;"></div>
+    </div>
+</body>
+</html>

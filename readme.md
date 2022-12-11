@@ -51,13 +51,13 @@ tubeSystem := pts.New(ptsc_gorilla.NewConnector(
 ```go
 tubeSystem.RegisterChannel("/stream/:streamId", pts.ChannelHandlers{
   OnSubscribe: func(s *pts.Context) {
-    print("Client joined: " + s.FullPath)
+    println("Client joined: " + s.FullPath)
   },
   OnMessage: func(s *pts.Context, message *pts.Message) {
-    print("New Message on " + s.FullPath + ": " + string(message.Payload))
+    println("New Message on " + s.FullPath + ": " + string(message.Payload))
   },
   OnUnsubscribe: func(s *pts.Context) {
-    print("Client left: " + s.FullPath)
+    println("Client left: " + s.FullPath)
   },
 })
 ```
@@ -65,7 +65,7 @@ tubeSystem.RegisterChannel("/stream/:streamId", pts.ChannelHandlers{
 3. Provide a connect route
 
 ```go
-r.POST("/connect", func(c *gin.Context) {
+r.GET("/connect", func(c *gin.Context) {
   properties := make(map[string]interface{}, 1)
   properties["ctx"] = c
 
@@ -76,3 +76,12 @@ r.POST("/connect", func(c *gin.Context) {
 ```
 
 4. Connect from a frontend lib
+```javascript
+const client = new GoPTSClient({ url: socketUrl, debugging: true })
+client.subscribeChannel("test", console.log);
+client.send("test", { payload: { foo: "bar" } })
+```
+
+## Examples
+
+To get quick overview, checkout the `examples` folder.
