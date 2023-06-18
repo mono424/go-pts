@@ -52,7 +52,7 @@ func TestContext(t *testing.T) {
 
 	t.Run("Get/Set properties", func(t *testing.T) {
 		testKey := "fooBar"
-		testKeyNotExistant := "fooBarBarFoo"
+		testKeyNotExistent := "fooBarBarFoo"
 		testVal := "barFoo"
 		testContext := &Context{
 			properties: map[string]interface{}{},
@@ -63,7 +63,7 @@ func TestContext(t *testing.T) {
 			t.Errorf("testContext.Get(%s) = %s, want %s", testKey, val, testVal)
 		}
 
-		if val, exists := testContext.Get(testKeyNotExistant); exists != false || val != nil {
+		if val, exists := testContext.Get(testKeyNotExistent); exists != false || val != nil {
 			valStr := "nil"
 			if val != nil {
 				valStr = "interface{}"
@@ -74,12 +74,30 @@ func TestContext(t *testing.T) {
 				boolStr = "true"
 			}
 
-			t.Errorf("testContext.Get(%s) = (%s, %s), want (nil, false)", testKeyNotExistant, valStr, boolStr)
+			t.Errorf("testContext.Get(%s) = (%s, %s), want (nil, false)", testKeyNotExistent, valStr, boolStr)
 		}
 	})
 
+	t.Run("MustGet property", func(t *testing.T) {
+		testKey := "fooBar"
+		testKeyNotExistent := "fooBarBarFoo"
+		testVal := "barFoo"
+		testContext := &Context{
+			properties: map[string]interface{}{},
+		}
+
+		testContext.Set(testKey, testVal)
+		if val := testContext.MustGet(testKey); val != testVal {
+			t.Errorf("testContext.MustGet(%s) = %s, want %s", testKey, val, testVal)
+		}
+
+		defer func() { recover() }()
+		testContext.MustGet(testKeyNotExistent)
+		t.Errorf("testContext.MustGet(%s) did not panic, but it should have", testKeyNotExistent)
+	})
+
 	t.Run("Get/Set properties", func(t *testing.T) {
-		testKeyNotExistant := "fooBarXX"
+		testKeyNotExistent := "fooBarXX"
 		testKey := "fooBar"
 		testVal := "barFoo"
 		testContext := &Context{
@@ -94,8 +112,8 @@ func TestContext(t *testing.T) {
 			t.Errorf("testContext.Param(%s) = %s, want %s", testKey, val, testVal)
 		}
 
-		if val := testContext.Param(testKeyNotExistant); val != "" {
-			t.Errorf("testContext.Param(%s) != %s, want \"\"", testKeyNotExistant, val)
+		if val := testContext.Param(testKeyNotExistent); val != "" {
+			t.Errorf("testContext.Param(%s) != %s, want \"\"", testKeyNotExistent, val)
 		}
 	})
 

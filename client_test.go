@@ -35,6 +35,24 @@ func TestClient(t *testing.T) {
 		}
 	})
 
+	t.Run("Client MustGet", func(t *testing.T) {
+		testKey := "barFoo"
+		testKeyNotExistent := "barFooNotThere"
+		testVal := "fooBar"
+
+		client := NewClient(func(message []byte) error { return nil }, map[string]interface{}{})
+
+		client.Set(testKey, testVal)
+
+		if val := client.MustGet(testKey); val != testVal {
+			t.Errorf("client.MustGet(\"%s\") = %s, want %s", testKey, val, testVal)
+		}
+
+		defer func() { recover() }()
+		client.MustGet(testKeyNotExistent)
+		t.Errorf("client.MustGet(%s) did not panic, but it should have", testKeyNotExistent)
+	})
+
 	t.Run("Client Get Missing", func(t *testing.T) {
 		testKey := "barFoo"
 
