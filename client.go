@@ -1,5 +1,7 @@
 package pts
 
+import "fmt"
+
 type MessageSendFunc func(message []byte) error
 
 type Client struct {
@@ -18,6 +20,13 @@ func NewClient(sendMessage MessageSendFunc, properties map[string]interface{}) *
 
 func (client *Client) Send(message []byte) error {
 	return client.sendMessage(message)
+}
+
+func (client *Client) MustGet(key string) interface{} {
+	if value, exists := client.Get(key); exists {
+		return value
+	}
+	panic(fmt.Sprintf("Key '%s' does not exist", key))
 }
 
 func (client *Client) Get(key string) (value interface{}, exists bool) {

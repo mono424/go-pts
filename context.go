@@ -3,6 +3,7 @@ package pts
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 type Context struct {
@@ -41,6 +42,13 @@ func NewError(context *Context, code int, description string, err error) *Error 
 		Description: description,
 		Raw:         err,
 	}
+}
+
+func (context *Context) MustGet(key string) interface{} {
+	if value, exists := context.Get(key); exists {
+		return value
+	}
+	panic(fmt.Sprintf("Key '%s' does not exist", key))
 }
 
 func (context *Context) Get(key string) (value interface{}, exists bool) {
