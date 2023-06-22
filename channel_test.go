@@ -466,4 +466,276 @@ func TestChannelPathMatch(t *testing.T) {
 		}
 
 	})
+
+	t.Run("Broadcast should correctly call sendMessage for clients", func(t *testing.T) {
+		testPath := "example/path"
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+		channel := &Channel{
+			path:        strings.Split(testPath, channelPathSep),
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		sendCount := 0
+		errorCount := 0
+
+		testClient := &Client{
+			Id: "ABC123",
+			sendMessage: func(message []byte) error {
+				sendCount++
+				return nil
+			},
+		}
+
+		errorClient := &Client{
+			Id: "DEF456",
+			sendMessage: func(message []byte) error {
+				errorCount++
+				return errors.New("failed to send message")
+			},
+		}
+
+		skipClient := &Client{
+			Id: "XYZ789",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		channel.Subscribe(&Context{FullPath: testPath, Client: testClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: errorClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: skipClient})
+
+		options := &ChannelBroadcastOptions{
+			SkipClientIds: []string{"XYZ789"},
+		}
+
+		// when
+		channel.Broadcast(testPath, payload, options)
+
+		// then
+		if sendCount != 1 {
+			t.Errorf("Expected sendMessage to be called once for testClient, was called %d times", sendCount)
+		}
+		if errorCount != 1 {
+			t.Errorf("Expected sendMessage to be called once for errorClient, was called %d times", sendCount)
+		}
+	})
+
+	t.Run("Broadcast should not call sendMessage for skipped clients", func(t *testing.T) {
+		testPath := "example/path"
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+		channel := &Channel{
+			path:        strings.Split(testPath, channelPathSep),
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		skipSendCount := 0
+
+		testClient := &Client{
+			Id: "ABC123",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		errorClient := &Client{
+			Id: "DEF456",
+			sendMessage: func(message []byte) error {
+				return errors.New("failed to send message")
+			},
+		}
+
+		skipClient := &Client{
+			Id: "XYZ789",
+			sendMessage: func(message []byte) error {
+				skipSendCount++
+				return nil
+			},
+		}
+
+		channel.Subscribe(&Context{FullPath: testPath, Client: testClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: errorClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: skipClient})
+
+		options := &ChannelBroadcastOptions{
+			SkipClientIds: []string{"XYZ789"},
+		}
+
+		// when
+		channel.Broadcast(testPath, payload, options)
+
+		// then
+		if skipSendCount != 0 {
+			t.Errorf("Expected sendMessage not to be called for skipClient, was called %d times", skipSendCount)
+		}
+	})
+
+	t.Run("Broadcast should return HasErrors true when there is an error", func(t *testing.T) {
+		testPath := "example/path"
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+		channel := &Channel{
+			path:        strings.Split(testPath, channelPathSep),
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		testClient := &Client{
+			Id: "ABC123",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		errorClient := &Client{
+			Id: "DEF456",
+			sendMessage: func(message []byte) error {
+				return errors.New("failed to send message")
+			},
+		}
+
+		skipClient := &Client{
+			Id: "XYZ789",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		channel.Subscribe(&Context{FullPath: testPath, Client: testClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: errorClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: skipClient})
+
+		options := &ChannelBroadcastOptions{
+			SkipClientIds: []string{"XYZ789"},
+		}
+
+		// when
+		result := channel.Broadcast(testPath, payload, options)
+
+		// then
+		if !result.HasErrors {
+			t.Errorf("Expected HasErrors to be true, got false")
+		}
+	})
+
+	t.Run("Broadcast should return correct number of results", func(t *testing.T) {
+		testPath := "example/path"
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+		channel := &Channel{
+			path:        strings.Split(testPath, channelPathSep),
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		testClient := &Client{
+			Id: "ABC123",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		errorClient := &Client{
+			Id: "DEF456",
+			sendMessage: func(message []byte) error {
+				return errors.New("failed to send message")
+			},
+		}
+
+		skipClient := &Client{
+			Id: "XYZ789",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		channel.Subscribe(&Context{FullPath: testPath, Client: testClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: errorClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: skipClient})
+
+		options := &ChannelBroadcastOptions{
+			SkipClientIds: []string{"XYZ789"},
+		}
+
+		// when
+		result := channel.Broadcast(testPath, payload, options)
+
+		// then
+		if len(result.Results) != 3 {
+			t.Errorf("Expected 3 results, got %d", len(result.Results))
+		}
+	})
+
+	t.Run("Broadcast should return correct results for each client", func(t *testing.T) {
+		testPath := "example/path"
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+		channel := &Channel{
+			path:        strings.Split(testPath, channelPathSep),
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		testClient := &Client{
+			Id: "ABC123",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		errorClient := &Client{
+			Id: "DEF456",
+			sendMessage: func(message []byte) error {
+				return errors.New("failed to send message")
+			},
+		}
+
+		skipClient := &Client{
+			Id: "XYZ789",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		channel.Subscribe(&Context{FullPath: testPath, Client: testClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: errorClient})
+		channel.Subscribe(&Context{FullPath: testPath, Client: skipClient})
+
+		options := &ChannelBroadcastOptions{
+			SkipClientIds: []string{"XYZ789"},
+		}
+
+		// when
+		result := channel.Broadcast(testPath, payload, options)
+
+		// then
+		for _, res := range result.Results {
+			if res.Context.Client.Id == testClient.Id && (res.Err != nil || res.Skipped) {
+				t.Errorf("Unexpected result for client %s", testClient.Id)
+			}
+
+			if res.Context.Client.Id == errorClient.Id && (res.Err == nil || res.Skipped) {
+				t.Errorf("Expected error for client %s", errorClient.Id)
+			}
+
+			if res.Context.Client.Id == skipClient.Id && (!res.Skipped || res.Err != nil) {
+				t.Errorf("Expected skip for client %s", skipClient.Id)
+			}
+		}
+	})
+
 }

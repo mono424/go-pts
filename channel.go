@@ -197,6 +197,11 @@ func (c *Channel) Broadcast(fullPath string, payload []byte, options *ChannelBro
 				Skipped: false,
 			})
 			res.HasErrors = true
+		} else {
+			res.Results = append(res.Results, &BroadcastSendResult{
+				Context: context,
+				Skipped: false,
+			})
 		}
 	}
 

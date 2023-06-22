@@ -1,6 +1,7 @@
 package pts
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 )
@@ -125,7 +126,11 @@ func TestContext(t *testing.T) {
 			}},
 		}
 
-		if err := testContext.Send([]byte{1, 2, 3}); err == nil {
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+
+		if err := testContext.Send(payload); err == nil {
 			t.Errorf("testContext.Send(...) returns no error, want error")
 		} else if err.Code != ErrorSendingMessageFailed {
 			t.Errorf("testContext.Send(...) returns Error{Code: %d}, want Error{Code: %d}", err.Code, ErrorSendingMessageFailed)
