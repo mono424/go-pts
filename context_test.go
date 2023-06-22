@@ -3,6 +3,7 @@ package pts
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -134,6 +135,149 @@ func TestContext(t *testing.T) {
 			t.Errorf("testContext.Send(...) returns no error, want error")
 		} else if err.Code != ErrorSendingMessageFailed {
 			t.Errorf("testContext.Send(...) returns Error{Code: %d}, want Error{Code: %d}", err.Code, ErrorSendingMessageFailed)
+		}
+	})
+
+	t.Run("Broadcast should correctly exclude context owner if option is set", func(t *testing.T) {
+		testPath := "example/path"
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+		opts := &ContextBroadcastOptions{
+			ExcludeContextOwner: true,
+		}
+
+		channel := &Channel{
+			path:        strings.Split(testPath, channelPathSep),
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		ownerClient := &Client{
+			Id: "ABC123",
+			sendMessage: func(message []byte) error {
+				t.Error("sendMessage should not have been called for ownerClient")
+				return nil
+			},
+		}
+
+		otherClient := &Client{
+			Id: "XYZ789",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		context := &Context{
+			FullPath: testPath,
+			Client:   ownerClient,
+			Channel:  channel,
+		}
+
+		channel.Subscribe(context)
+		channel.Subscribe(&Context{FullPath: testPath, Client: otherClient})
+
+		// when
+		context.Broadcast(payload, opts)
+
+		// there's no explicit "then" step here because we're asserting in the sendMessage function
+	})
+
+	t.Run("Broadcast should not exclude context owner if option is not set", func(t *testing.T) {
+		testPath := "example/path"
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+		opts := &ContextBroadcastOptions{
+			ExcludeContextOwner: false,
+		}
+
+		channel := &Channel{
+			path:        strings.Split(testPath, channelPathSep),
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		sendCount := 0
+		ownerClient := &Client{
+			Id: "ABC123",
+			sendMessage: func(message []byte) error {
+				sendCount++
+				return nil
+			},
+		}
+
+		otherClient := &Client{
+			Id: "XYZ789",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		context := &Context{
+			FullPath: testPath,
+			Client:   ownerClient,
+			Channel:  channel,
+		}
+
+		channel.Subscribe(context)
+		channel.Subscribe(&Context{FullPath: testPath, Client: otherClient})
+
+		// when
+		context.Broadcast(payload, opts)
+
+		// then
+		if sendCount != 1 {
+			t.Errorf("Expected sendMessage to be called once for ownerClient, was called %d times", sendCount)
+		}
+	})
+
+	t.Run("Broadcast should not exclude context owner if options is nil", func(t *testing.T) {
+		testPath := "example/path"
+		payload, _ := json.Marshal(map[string]any{
+			"foo": "bar",
+		})
+
+		channel := &Channel{
+			path:        strings.Split(testPath, channelPathSep),
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+		channel.subscribers.init()
+
+		sendCount := 0
+		ownerClient := &Client{
+			Id: "ABC123",
+			sendMessage: func(message []byte) error {
+				sendCount++
+				return nil
+			},
+		}
+
+		otherClient := &Client{
+			Id: "XYZ789",
+			sendMessage: func(message []byte) error {
+				return nil
+			},
+		}
+
+		context := &Context{
+			FullPath: testPath,
+			Client:   ownerClient,
+			Channel:  channel,
+		}
+
+		channel.Subscribe(context)
+		channel.Subscribe(&Context{FullPath: testPath, Client: otherClient})
+
+		// when
+		context.Broadcast(payload, nil)
+
+		// then
+		if sendCount != 1 {
+			t.Errorf("Expected sendMessage to be called once for ownerClient, was called %d times", sendCount)
 		}
 	})
 
