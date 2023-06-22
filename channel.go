@@ -1,6 +1,7 @@
 package pts
 
 import (
+	"encoding/json"
 	"strings"
 )
 
@@ -130,4 +131,79 @@ func (c *Channel) UnsubscribeAllPaths(clientId string) bool {
 	}
 
 	return true
+}
+
+type ChannelBroadcastOptions struct {
+	SkipClientIds []string
+}
+
+func (o *ChannelBroadcastOptions) shouldSkip(id string) bool {
+	for _, clientId := range o.SkipClientIds {
+		if clientId == id {
+			return true
+		}
+	}
+	return false
+}
+
+type ChannelBroadcastResult struct {
+	HasErrors bool
+	Results   []*BroadcastSendResult
+}
+
+type BroadcastSendResult struct {
+	Skipped bool
+	Context *Context
+	Err     *Error
+}
+
+func (c *Channel) Broadcast(fullPath string, payload []byte, options *ChannelBroadcastOptions) *ChannelBroadcastResult {
+	res := &ChannelBroadcastResult{
+		HasErrors: false,
+		Results:   []*BroadcastSendResult{},
+	}
+
+	message := Message{
+		Type:    MessageTypeChannelMessage,
+		Channel: fullPath,
+		Payload: payload,
+	}
+
+	data, err := json.Marshal(message)
+	if err != nil {
+		for _, context := range c.GetSubscribers(fullPath) {
+			res.Results = append(res.Results, &BroadcastSendResult{
+				Context: context,
+				Err:     NewError(context, ErrorSendingMessageFailed, "failed to broadcast to channel", err),
+			})
+		}
+		res.HasErrors = true
+		return res
+	}
+
+	for _, context := range c.GetSubscribers(fullPath) {
+		if options != nil && options.shouldSkip(context.Client.Id) {
+			res.Results = append(res.Results, &BroadcastSendResult{
+				Context: context,
+				Skipped: true,
+			})
+			continue
+		}
+
+		if err := context.Send(data); err != nil {
+			res.Results = append(res.Results, &BroadcastSendResult{
+				Context: context,
+				Err:     err,
+				Skipped: false,
+			})
+			res.HasErrors = true
+		} else {
+			res.Results = append(res.Results, &BroadcastSendResult{
+				Context: context,
+				Skipped: false,
+			})
+		}
+	}
+
+	return res
 }

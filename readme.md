@@ -8,23 +8,27 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/mono424/go-pts)](https://goreportcard.com/report/github.com/mono424/go-pts)
 [![codecov](https://codecov.io/gh/mono424/go-pts/branch/main/graph/badge.svg?token=9VA6CYDXAZ)](https://codecov.io/gh/mono424/go-pts)
 
-go-pts is a websocket channel management library written in Go. It offers a rest-style syntax and easily integrates with various websocket and http frameworks.
+Go-PTS is a flexible package for managing Pub-Sub over WebSockets in Go. It offers a rest-style syntax and easily integrates with various websocket and http frameworks.
 
 ## Installation
 
-1. Install go-pts by using the comand below.
+### Installing the main library
 
-```
+1. Get the `go-pts` package using the following command:
+
+```shell
 go get github.com/mono424/go-pts
 ```
 
-2. Install the driver for your websocket module.
+### Using connectors
 
-```
+To use go-pts with a specific websocket library, you need to install the corresponding connector.
+
+```shell
 go get github.com/mono424/go-pts-gorilla-connector
 ```
 
-3. Import to your code.
+Then, you can import them in your code like this:
 
 ```go
 import (
@@ -33,7 +37,25 @@ import (
 )
 ```
 
-## Get Started
+## Client Libraries
+
+For client-side integration, you can use one of the following client libraries:
+
+| Language | URL |
+| -------- | --- |
+| JavaScript | [go-pts-client-js](https://github.com/mono424/go-pts-client-js) |
+| Dart | [go-pts-client-dart](https://github.com/mono424/go-pts-client-dart) |
+
+## Connectors
+
+For server-side integration with WebSocket libraries, you can use one of the following connectors:
+
+| WebSocket Library | URL |
+| ----------------- | --- |
+| Gorilla WebSocket | [go-pts-gorilla-connector](https://github.com/mono424/go-pts-gorilla-connector) |
+| Melody | [go-pts-melody-connector](https://github.com/mono424/go-pts-melody-connector) |
+
+## Getting Started
 
 1. Create a new TubeSystem
 
@@ -84,4 +106,4 @@ client.send("test", { payload: { foo: "bar" } })
 
 ## Examples
 
-To get quick overview, checkout the `examples` folder.
+To get a quick overview of how to use Go-PTS, check out the `examples` folder.
