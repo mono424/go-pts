@@ -61,6 +61,7 @@ func (s *ChannelStore) Subscribe(client *Client, channelPath string) bool {
 		channel.Subscribe(&Context{
 			Client:     client,
 			FullPath:   channelPath,
+			Channel:    channel,
 			params:     params,
 			properties: map[string]interface{}{},
 		})

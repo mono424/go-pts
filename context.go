@@ -9,6 +9,7 @@ import (
 type Context struct {
 	Client     *Client
 	FullPath   string
+	Channel    *Channel
 	params     map[string]string
 	properties map[string]interface{}
 }
@@ -105,4 +106,16 @@ func (context *Context) SetParams(params map[string]string) {
 
 func (context *Context) Param(key string) string {
 	return context.params[key]
+}
+
+type ContextBroadcastOptions struct {
+	ExcludeContextOwner bool
+}
+
+func (context *Context) Broadcast(payload []byte, options *ContextBroadcastOptions) *ChannelBroadcastResult {
+	opts := &ChannelBroadcastOptions{}
+	if options != nil && options.ExcludeContextOwner {
+		opts.SkipClientIds = []string{context.Client.Id}
+	}
+	return context.Channel.Broadcast(context.FullPath, payload, opts)
 }
