@@ -1,7 +1,6 @@
 package pts
 
 import (
-	"encoding/json"
 	"strings"
 )
 
@@ -163,24 +162,6 @@ func (c *Channel) Broadcast(fullPath string, payload []byte, options *ChannelBro
 		Results:   []*BroadcastSendResult{},
 	}
 
-	message := Message{
-		Type:    MessageTypeChannelMessage,
-		Channel: fullPath,
-		Payload: payload,
-	}
-
-	data, err := json.Marshal(message)
-	if err != nil {
-		for _, context := range c.GetSubscribers(fullPath) {
-			res.Results = append(res.Results, &BroadcastSendResult{
-				Context: context,
-				Err:     NewError(context, ErrorSendingMessageFailed, "failed to broadcast to channel", err),
-			})
-		}
-		res.HasErrors = true
-		return res
-	}
-
 	for _, context := range c.GetSubscribers(fullPath) {
 		if options != nil && options.shouldSkip(context.Client.Id) {
 			res.Results = append(res.Results, &BroadcastSendResult{
@@ -190,7 +171,7 @@ func (c *Channel) Broadcast(fullPath string, payload []byte, options *ChannelBro
 			continue
 		}
 
-		if err := context.Send(data); err != nil {
+		if err := context.Send(payload); err != nil {
 			res.Results = append(res.Results, &BroadcastSendResult{
 				Context: context,
 				Err:     err,
