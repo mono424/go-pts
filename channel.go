@@ -188,3 +188,36 @@ func (c *Channel) Broadcast(fullPath string, payload []byte, options *ChannelBro
 
 	return res
 }
+
+func (c *Channel) BroadcastAll(payload []byte, options *ChannelBroadcastOptions) *ChannelBroadcastResult {
+	res := &ChannelBroadcastResult{
+		HasErrors: false,
+		Results:   []*BroadcastSendResult{},
+	}
+
+	for _, context := range c.GetAllSubscribers() {
+		if options != nil && options.shouldSkip(context.Client.Id) {
+			res.Results = append(res.Results, &BroadcastSendResult{
+				Context: context,
+				Skipped: true,
+			})
+			continue
+		}
+
+		if err := context.Send(payload); err != nil {
+			res.Results = append(res.Results, &BroadcastSendResult{
+				Context: context,
+				Err:     err,
+				Skipped: false,
+			})
+			res.HasErrors = true
+		} else {
+			res.Results = append(res.Results, &BroadcastSendResult{
+				Context: context,
+				Skipped: false,
+			})
+		}
+	}
+
+	return res
+}
