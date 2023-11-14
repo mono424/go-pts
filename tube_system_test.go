@@ -2,6 +2,8 @@ package pts
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 )
 
@@ -489,6 +491,103 @@ func TestTubeSystemMessaging(t *testing.T) {
 			return
 		}
 
+	})
+
+	t.Run("usePlugin should call Plugin Initializer", func(t *testing.T) {
+		initCalls := 0
+		plugin := Plugin{
+			Init: func(registerChannel ChannelRegisterFunc) error {
+				initCalls++
+				return nil
+			},
+		}
+		fakeConnector, _ := NewFakeConnector(func(err *Error) {})
+		tubeSystem := New(fakeConnector)
+
+		if err := tubeSystem.UsePlugin("some/prefix", plugin); err != nil {
+			t.Errorf("tubeSystem.UsePlugin(...) throws an error: %s", err.Error())
+			return
+		}
+
+		if initCalls != 1 {
+			t.Errorf("initCalls = %d, want %d", initCalls, 1)
+			return
+		}
+	})
+
+	t.Run("usePlugin should throw if Plugin Initializer throws", func(t *testing.T) {
+		plugin := Plugin{
+			Init: func(registerChannel ChannelRegisterFunc) error {
+				return errors.New("failed")
+			},
+		}
+		fakeConnector, _ := NewFakeConnector(func(err *Error) {})
+		tubeSystem := New(fakeConnector)
+
+		if err := tubeSystem.UsePlugin("some/prefix", plugin); err == nil {
+			t.Errorf("tubeSystem.UsePlugin(...) should throw an error")
+			return
+		}
+	})
+
+	t.Run("usePlugin should respect prefix on channel registrations", func(t *testing.T) {
+		var channels []*Channel
+		prefixParts := []string{"some", "prefix"}
+		prefix := strings.Join(prefixParts, channelPathSep)
+		plugin := Plugin{
+			Init: func(registerChannel ChannelRegisterFunc) error {
+				channels = append(channels, registerChannel("a", ChannelHandlers{}))
+				channels = append(channels, registerChannel("a/b/c", ChannelHandlers{}))
+				channels = append(channels, registerChannel("param/:param", ChannelHandlers{}))
+				channels = append(channels, registerChannel(":param/test/:id", ChannelHandlers{}))
+				return nil
+			},
+		}
+		fakeConnector, _ := NewFakeConnector(func(err *Error) {})
+		tubeSystem := New(fakeConnector)
+
+		if err := tubeSystem.UsePlugin(prefix, plugin); err != nil {
+			t.Errorf("tubeSystem.UsePlugin(...) throws an error: %s", err.Error())
+			return
+		}
+
+		for _, channel := range channels {
+			for i, prefixPart := range prefixParts {
+				if channel.path[i] != prefixPart {
+					t.Errorf("tubeSystem.UsePlugin(...) should apply prefix correctly. Got %s, Expected to start with %s", strings.Join(channel.path, channelPathSep), prefix)
+				}
+			}
+		}
+	})
+
+	t.Run("usePlugin cleans channels up after fail", func(t *testing.T) {
+		stayChannelPath := "should/stay"
+		plugin := Plugin{
+			Init: func(registerChannel ChannelRegisterFunc) error {
+				registerChannel("a", ChannelHandlers{})
+				registerChannel("a/b/c", ChannelHandlers{})
+				registerChannel("param/:param", ChannelHandlers{})
+				registerChannel(":param/test/:id", ChannelHandlers{})
+				return errors.New("fail")
+			},
+		}
+		fakeConnector, _ := NewFakeConnector(func(err *Error) {})
+		tubeSystem := New(fakeConnector)
+
+		tubeSystem.channels.Register(stayChannelPath, ChannelHandlers{})
+
+		if err := tubeSystem.UsePlugin("some/prefix", plugin); err == nil {
+			t.Errorf("tubeSystem.UsePlugin(...) should throw an error")
+			return
+		}
+
+		if len(tubeSystem.channels.channels) != 1 {
+			t.Errorf("there should be only 1 channel but there are: %d", len(tubeSystem.channels.channels))
+		}
+
+		if exists, _, _ := tubeSystem.channels.Get(stayChannelPath); !exists {
+			t.Errorf("channel was removed, but should be there: %s", stayChannelPath)
+		}
 	})
 
 }

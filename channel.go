@@ -119,6 +119,14 @@ func (c *Channel) Unsubscribe(clientId string, path string) bool {
 	return true
 }
 
+// UnsubscribeAll unsubscribes all clients from all paths of the channel they are connected to.
+func (c *Channel) UnsubscribeAll() bool {
+	for _, sub := range c.GetAllSubscribers() {
+		c.UnsubscribeAllPaths(sub.Client.Id)
+	}
+	return true
+}
+
 // UnsubscribeAllPaths unsubscribes a client from all paths of the channel they are connected to.
 func (c *Channel) UnsubscribeAllPaths(clientId string) bool {
 	removed := c.subscribers.RemoveAllPaths(clientId)

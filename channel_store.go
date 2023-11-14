@@ -1,6 +1,7 @@
 package pts
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -25,6 +26,18 @@ func (s *ChannelStore) Register(path string, handlers ChannelHandlers) *Channel 
 	channel.subscribers.init()
 	s.channels[path] = &channel
 	return &channel
+}
+
+func (s *ChannelStore) DestroyChannel(path string) error {
+	channel, found := s.channels[path]
+	if !found {
+		return errors.New("channel not found")
+	}
+
+	delete(s.channels, path)
+	channel.UnsubscribeAll()
+
+	return nil
 }
 
 // Get finds a channel with a matching path.

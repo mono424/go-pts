@@ -3,6 +3,7 @@ package pts
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -37,9 +38,32 @@ func New(connector *Connector) *TubeSystem {
 	return &r
 }
 
+// UsePlugin registers a new plugin with a channel prefix and scoped access
+func (r *TubeSystem) UsePlugin(channelPrefix string, plugin Plugin) error {
+	var registeredChannels []string
+	if err := plugin.Init(func(channelName string, handlers ChannelHandlers) *Channel {
+		parts := append(strings.Split(channelPrefix, channelPathSep), strings.Split(channelName, channelPathSep)...)
+		fullChannelName := strings.Join(parts, channelPathSep)
+		channel := r.RegisterChannel(fullChannelName, handlers)
+		registeredChannels = append(registeredChannels, fullChannelName)
+		return channel
+	}); err != nil {
+		for _, channel := range registeredChannels {
+			_ = r.channels.DestroyChannel(channel)
+		}
+		return err
+	}
+	return nil
+}
+
 // RegisterChannel registers a new channel
 func (r *TubeSystem) RegisterChannel(channelName string, handlers ChannelHandlers) *Channel {
 	return r.channels.Register(channelName, handlers)
+}
+
+// DestroyChannel destroys a channel
+func (r *TubeSystem) DestroyChannel(channelName string) error {
+	return r.channels.DestroyChannel(channelName)
 }
 
 // HandleRequest handles a new websocket request, adds the properties to the new client
