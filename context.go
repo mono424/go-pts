@@ -23,6 +23,7 @@ const (
 	ErrorClientNotSubscribed         // ErrorClientNotSubscribed if a message is sent through a channel that is not subscribed by the client
 	ErrorSendingErrorFailed          // ErrorSendingErrorFailed if a error message could not be send to a client
 	ErrorSendingMessageFailed        // ErrorSendingMessageFailed if a message could not be sent to a client
+	ErrorMultipleErrors              // ErrorMultipleErrors multiple errors happened
 )
 
 type Error struct {
@@ -30,6 +31,7 @@ type Error struct {
 	Code        int      `json:"code"`
 	Description string   `json:"description"`
 	Raw         error    `json:"-"`
+	Errors      []*Error `json:"errors"`
 }
 
 func NewError(context *Context, code int, description string, err error) *Error {
@@ -42,6 +44,21 @@ func NewError(context *Context, code int, description string, err error) *Error 
 		Code:        code,
 		Description: description,
 		Raw:         err,
+		Errors:      []*Error{},
+	}
+}
+
+func NewMultiError(context *Context, description string, err error, errs []*Error) *Error {
+	if err == nil {
+		err = errors.New(description)
+	}
+
+	return &Error{
+		Context:     context,
+		Code:        ErrorMultipleErrors,
+		Description: description,
+		Raw:         err,
+		Errors:      errs,
 	}
 }
 

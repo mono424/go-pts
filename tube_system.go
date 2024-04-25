@@ -51,10 +51,15 @@ func (r *TubeSystem) IsConnected(clientId string) bool {
 	return r.connector.clients.Exists(clientId)
 }
 
-// IsSubscribed checks whether a client is subscribed to a certain channelPath or not
+// IsSubscribed checks whether a client is subscribed to all channels associated with a certain channelPath or not
 func (r *TubeSystem) IsSubscribed(channelPath string, clientId string) bool {
-	if found, channel, _ := r.channels.Get(channelPath); found {
-		return channel.IsSubscribed(clientId, channelPath)
+	if matches := r.channels.Get(channelPath); len(matches) > 0 {
+		for _, match := range matches {
+			if !match.Channel.IsSubscribed(clientId, channelPath) {
+				return false
+			}
+		}
+		return true
 	}
 	return false
 }
@@ -65,15 +70,29 @@ func (r *TubeSystem) GetChannel(channelPath string) (bool, *Channel) {
 }
 
 func (r *TubeSystem) Send(channelPath string, clientId string, payload []byte) *Error {
-	channelExists, channel, _ := r.channels.Get(channelPath)
-	if !channelExists {
+	matches := r.channels.Get(channelPath)
+	if len(matches) == 0 {
 		return NewError(nil, ErrorUnknownChannel, "channel does not exist", nil)
 	}
-	context, userSubscribed := channel.FindContext(clientId, channelPath)
-	if !userSubscribed {
+	if !r.IsSubscribed(channelPath, clientId) {
 		return NewError(nil, ErrorClientNotSubscribed, "user not subscribed to channel", nil)
 	}
-	return context.Send(payload)
+
+	var errors []*Error
+	for _, match := range matches {
+		context, userSubscribed := match.Channel.FindContext(clientId, channelPath)
+		if !userSubscribed {
+			errors = append(errors, NewError(nil, ErrorClientNotSubscribed, "user not subscribed to channel", nil))
+		}
+		if err := context.Send(payload); err != nil {
+			errors = append(errors, err)
+		}
+	}
+
+	if len(errors) > 0 {
+		return NewMultiError(nil, "Failed to send at least over one channel", nil, errors)
+	}
+	return nil
 }
 
 // connectHandler handles a new melody connection
