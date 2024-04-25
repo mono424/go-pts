@@ -36,14 +36,21 @@ type Channel struct {
 // PathMatches returns true and the params of the channel subscription if the path matches the path of the Channel.
 func (c *Channel) PathMatches(path string) (bool, map[string]string) {
 	params := map[string]string{}
-	parts := strings.Split(path, channelPathSep)
+	parts := strings.Split(strings.TrimRight(path, channelPathSep), channelPathSep)
 
 	if len(c.path) != len(parts) {
 		return false, nil
 	}
 
 	for i, s := range parts {
+		if s == "" { // Disallow empty path parts
+			return false, nil
+		}
+
 		if c.path[i] == s {
+			continue
+		}
+		if c.path[i][0] == '*' {
 			continue
 		}
 		if c.path[i][0] == ':' {

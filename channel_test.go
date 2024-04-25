@@ -74,6 +74,36 @@ func TestChannelPathMatch(t *testing.T) {
 		}
 	})
 
+	t.Run("With Wildcard", func(t *testing.T) {
+		variablePath := []string{"example", "*", "path"}
+		validPath1 := "example/var1/path"
+		validPath2 := "example/*/path"
+		invalidPath1 := "example//path"
+		invalidPath2 := "example/var1/pathX"
+
+		channel := Channel{
+			path:        variablePath,
+			handlers:    ChannelHandlers{},
+			subscribers: ChannelSubscribers{},
+		}
+
+		if match, _ := channel.PathMatches(validPath1); !match {
+			t.Errorf("channel.PathMatches(%s) = (false, [...]), want (true, [...])", validPath1)
+		}
+
+		if match, _ := channel.PathMatches(validPath2); !match {
+			t.Errorf("channel.PathMatches(%s) = (false, [...]), want (true, [...])", validPath2)
+		}
+
+		if match, _ := channel.PathMatches(invalidPath1); match {
+			t.Errorf("channel.PathMatches(%s) = (true, [...]), want (false, [...])", invalidPath1)
+		}
+
+		if match, _ := channel.PathMatches(invalidPath2); match {
+			t.Errorf("channel.PathMatches(%s) = (true, [...]), want (false, [...])", invalidPath2)
+		}
+	})
+
 	t.Run("Simple Subscribe", func(t *testing.T) {
 		simplePath := []string{"example", "path", "simple"}
 		testId := "ABC123"
