@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script type="module">
+        import { GoPTSClient } from "/js/index.module.js";
+
+        const socketUrl = "{{ .socketUrl }}";
+        window.addEventListener("load", function(evt) {
+            const client = new GoPTSClient({ url: socketUrl, debugging: true })
+            const input = document.querySelector("#input");
+            const usersList = document.querySelector("#users");
+            const messages = document.querySelector("#messages");
+
+            client.subscribeChannel("/chat/users", payload => {
+                const items = [];
+                for (const item of Object.keys(payload)) {
+                    if (!payload[item]) continue;
+                    const li = document.createElement("li");
+                    li.innerText = item;
+                    items.push(li)
+                }
+                usersList.innerHTML = "";
+                items.forEach(item => usersList.appendChild(item));
+            });
+
+            client.subscribeChannel("/chat/users", payload => {
+                const items = [];
+                for (const item of Object.keys(payload)) {
+                    if (!payload[item]) continue;
+                    const li = document.createElement("li");
+                    li.innerText = item;
+                    items.push(li)
+                }
+                usersList.innerHTML = "";
+                items.forEach(item => usersList.appendChild(item));
+            });
+
+            client.subscribeChannel("/chat", payload => {
+                const p = document.createElement("p");
+                p.innerText = payload;
+                messages.append(p)
+            });
+
+            document.querySelector("#form").addEventListener("submit", (e) => {
+                e.preventDefault();
+                client.send("/chat", { payload: input.value });
+            })
+        });
+    </script>
+</head>
+<body>
+    <div id="messages"></div>
+    <div>
+        <form id="form">
+            <input id="input" type="text" value="Hello world!">
+            <button type="submit">Send</button>
+        </form>
+        <div id="output" style="max-height: 70vh;overflow-y: scroll;"></div>
+    </div>
+    <ul id="users"></ul>
+</body>
+</html>

@@ -1,0 +1,16 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  go-pts-client:
+    specifier: ^0.0.7
+    version: 0.0.7
+
+packages:
+
+  /go-pts-client@0.0.7:
+    resolution: {integrity: sha512-F7foI6fn7OmJ6Sb8I/gfz7Yey9S0zL17NiNlIMuzj4MLuKOczCbmYPVOxqFnAp/6Qn17SjTtV8rYLPM0TPNKPA==}
+    dev: false
